@@ -1,0 +1,58 @@
+name: "vprofile IAC"
+on:
+  push:
+    branches:
+      - main
+      - stage
+    paths:
+      - terraform/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - terraform/**
+env:
+  # Creadentials for Deloyment on AWS
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID}}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+  # S3 bucket for the terraform state
+  BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE}}
+  AWS_REGION: us-east-2
+  EKS_CLUSTER: vprofile-eks
+
+#jobs should have steps ,eeh cawabanga
+jobs:
+  terraform:
+    name: "apply terraform code changes"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v2
+        # with:
+        #   terraform_version: 1.6.3
+      - name: terraform init
+        id: init
+        run: terraform init -backend-config="backet=$BUCKET_TF_STATE"
+      - name: terraform format
+        id: fmt
+        run: terraform fmt -checkout
+        # validate to check the syntax of the code
+      - name: terraform validate
+        id: validate
+        run: terraform validate
+      - name: terraform plan
+        id: plan
+        run: terraform plan -no-color -input=false -out planfile
+        continue-on-error: true
+
+      - name: terraform plan
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+        #close
