@@ -44,7 +44,7 @@ jobs:
         run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
       - name: terraform format
         id: fmt
-        run: terraform fmt -checkout
+        run: terraform fmt -check
         # validate to check the syntax of the code
       - name: terraform validate
         id: validate
