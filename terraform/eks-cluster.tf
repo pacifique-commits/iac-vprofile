@@ -9,46 +9,12 @@ module "eks" {
   subnet_ids                     = module.vpc.private_subnets
   cluster_endpoint_public_access = true
 
-  # Force creation of new KMS key with proper permissions
-  create_kms_key                  = true
-  kms_key_description             = "EKS cluster ${local.cluster_name} encryption key"
-  kms_key_deletion_window_in_days = 7
-  kms_key_aliases                 = ["eks/${local.cluster_name}-v2"]
-
-  kms_key_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      {
-        Sid    = "Allow GitOps User"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/gitops"
-        }
-        Action = [
-          "kms:CreateAlias",
-          "kms:UpdateAlias",
-          "kms:DeleteAlias",
-          "kms:DescribeKey",
-          "kms:GetKeyPolicy",
-          "kms:PutKeyPolicy",
-          "kms:EnableKey",
-          "kms:DisableKey",
-          "kms:TagResource",
-          "kms:UntagResource"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
+  # Use external KMS key
+  create_kms_key = false
+  cluster_encryption_config = {
+    provider_key_arn = aws_kms_key.eks.arn
+    resources        = ["secrets"]
+  }
 
   eks_managed_node_group_defaults = {
     ami_type = "AL2_x86_64"
