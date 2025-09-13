@@ -9,11 +9,8 @@ module "eks" {
   subnet_ids                     = module.vpc.private_subnets
   cluster_endpoint_public_access = true
 
-  # Force creation of new KMS key with proper permissions
-  create_kms_key                  = true
-  kms_key_description             = "EKS cluster ${local.cluster_name} encryption key"
-  kms_key_deletion_window_in_days = 7
-  kms_key_aliases                 = ["eks/${local.cluster_name}-v2"]
+  # Use AWS managed KMS key for encryption
+  create_kms_key = false
 
   eks_managed_node_group_defaults = {
     ami_type = "AL2_x86_64"
