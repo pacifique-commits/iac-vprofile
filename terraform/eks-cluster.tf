@@ -14,7 +14,7 @@ module "eks" {
   kms_key_description             = "EKS cluster ${local.cluster_name} encryption key"
   kms_key_deletion_window_in_days = 7
   kms_key_aliases                 = ["eks/${local.cluster_name}-v2"]
-  
+
   kms_key_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
